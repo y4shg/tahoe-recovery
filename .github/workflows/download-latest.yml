@@ -1,26 +1,35 @@
-name: Tahoe Beta (latest) Recovery Image
-
+name: Tahoe (latest) Recovery Image
 on:
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Clone gibMacOS
         run: |
           git clone https://github.com/corpnewt/gibMacOS.git
-
-      - name: Download macOS Installer (latest beta)
+      - name: Download macOS Installer (latest)
         run: |
-          python ./gibMacOS/gibMacOS.py -c customer -v Tahoe -m 26 -o /tmp/Tahoe-beta-latest
-
+          python ./gibMacOS/gibMacOS.py -c customer -v Tahoe -m 26 -o /tmp/Tahoe-latest
       - name: Install the assistant
         run: |
-          sudo installer -pkg /tmp/Tahoe-beta-latest/InstallAssistant.pkg -target /
-
+          sudo installer -pkg /tmp/Tahoe-latest/InstallAssistant.pkg -target /
+      - name: Free up disk space
+        run: |
+          echo "=== Disk space before cleanup ==="
+          df -h
+          
+          # Remove unnecessary files to free up space
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/swift
+          sudo rm -rf /usr/local/julia*
+          
+          echo "=== Disk space after cleanup ==="
+          df -h
       - name: Generate macOS Installer
         run: |
           INSTALLER=$(ls -d /Applications/Install*.app | head -n 1 || true)
@@ -30,20 +39,15 @@ jobs:
             exit 1
           fi
           SIZE_MB=$(du -sm "$INSTALLER" | cut -f1)
-
-          # Add 40% headroom and ceil
-          EXTRA=$(echo "($SIZE_MB * 0.4 + 0.999)/1" | bc)
-
+          # Add 15% headroom and ceil
+          EXTRA=$(echo "($SIZE_MB * 0.15 + 0.999)/1" | bc)
           TOTAL_MB=$(( SIZE_MB + EXTRA ))
-
           echo "Installer size: $SIZE_MB MB"
           echo "Allocating DMG size: $TOTAL_MB MB"
-
-          sudo hdiutil create -o /tmp/Tahoe -size ${TOTAL_MB}m -volname 'Tahoe' -layout SPUD -fs HFS+J
-          sudo hdiutil attach /tmp/Tahoe.dmg -noverify -mountpoint /Volumes/Tahoe
+          sudo hdiutil create -o /tmp/Tahoe -size ${TOTAL_MB}m -volname 'Tahoe' -layout SPUD -fs HFS+J -type SPARSE
+          sudo hdiutil attach /tmp/Tahoe.sparseimage -noverify -mountpoint /Volumes/Tahoe
           sleep 10
           sudo "$INSTALLER/Contents/Resources/createinstallmedia" --volume /Volumes/Tahoe --nointeraction
-
           # Detect created installer volume (it always starts with "Install")
           INSTALL_VOL=$(ls -d /Volumes/Install* | head -n 1 || true)
           if [ ! -d "$INSTALL_VOL" ]; then
@@ -52,9 +56,7 @@ jobs:
             exit 1
           fi
           echo "Found installer volume: $INSTALL_VOL"
-
           cp -R "$INSTALL_VOL/BaseSystem" /tmp/BaseSystem
-
       - name: Upload com.apple.recovery.boot
         uses: actions/upload-artifact@v4
         with:
