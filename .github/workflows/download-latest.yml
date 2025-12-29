@@ -15,7 +15,7 @@ jobs:
 
       - name: Download macOS Installer (latest beta)
         run: |
-          python ./gibMacOS/gibMacOS.py -c developer -v Tahoe -m 26 -o /tmp/Tahoe-beta-latest
+          python ./gibMacOS/gibMacOS.py -c customer -v Tahoe -m 26 -o /tmp/Tahoe-beta-latest
 
       - name: Install the assistant
         run: |
