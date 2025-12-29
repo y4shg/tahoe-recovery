@@ -11,7 +11,7 @@ jobs:
           git clone https://github.com/corpnewt/gibMacOS.git
       - name: Download macOS Installer (latest)
         run: |
-          python ./gibMacOS/gibMacOS.py -c publicrelease -v Tahoe -m 26.2 -o /tmp/Tahoe-latest
+          python ./gibMacOS/gibMacOS.py -c publicrelease -v Tahoe -o /tmp/Tahoe-latest
       - name: Install the assistant
         run: |
           sudo installer -pkg /tmp/Tahoe-latest/InstallAssistant.pkg -target /
@@ -62,4 +62,10 @@ jobs:
         with:
           name: com.apple.recovery.boot
           path: /tmp/BaseSystem/*
+          compression-level: 9
+      - name: Upload InstallAssistant.pkg
+        uses: actions/upload-artifact@v4
+        with:
+          name: InstallAssistant.pkg
+          path: /tmp/Tahoe-latest/InstallAssistant.pkg
           compression-level: 9
