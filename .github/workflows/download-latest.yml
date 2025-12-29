@@ -11,7 +11,7 @@ jobs:
           git clone https://github.com/corpnewt/gibMacOS.git
       - name: Download macOS Installer (latest)
         run: |
-          python ./gibMacOS/gibMacOS.py -c customer -v Tahoe -m 26 -o /tmp/Tahoe-latest
+          python ./gibMacOS/gibMacOS.py -c customer -v Tahoe -m 26.2 -o /tmp/Tahoe-latest
       - name: Install the assistant
         run: |
           sudo installer -pkg /tmp/Tahoe-latest/InstallAssistant.pkg -target /
